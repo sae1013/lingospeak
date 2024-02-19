@@ -1,19 +1,12 @@
-from flask import Flask, url_for, request, jsonify
+from flask import Blueprint, request, jsonify
 from openai import AsyncOpenAI
 import os
-from flask_cors import CORS
-from dotenv import load_dotenv
 
 import tempfile
 import boto3
 from werkzeug.utils import secure_filename
 from datetime import datetime
-import io
 
-
-app = Flask(__name__, static_folder='static')
-cors = CORS(app, resources={r"/api/*": {"origins": "*"}})
-load_dotenv()
 
 OPENAI_API_KEY = os.environ.get('OPENAI_API_KEY')
 client = AsyncOpenAI(
@@ -34,7 +27,10 @@ polly_client = aws_session.client(
     service_name='polly', region_name=AWS_REGION_NAME)
 
 
-@app.route('/api/audiochat/completion')
+api = Blueprint('api', __name__)
+
+
+@api.route('/api/audiochat/completion')
 async def handle_text_to_speech(prompt):
     # test_prompt = 'Hi! My name is Danielle. I will read any text you type here. Hows your condition today?'
     response = polly_client.synthesize_speech(
@@ -86,7 +82,7 @@ def save_file(audio_file):
     return tmp_file_path
 
 
-@app.route('/')
+@api.route('/')
 def get_api_key():
     if not OPENAI_API_KEY:
         return 'API키 유실'
@@ -94,7 +90,12 @@ def get_api_key():
         return f'your key is {OPENAI_API_KEY}'
 
 
-@app.route('/api/audiochat/completion', methods=['POST'])
+@api.route('/users')
+def get_users():
+    pass
+
+
+@api.route('/api/audiochat/completion', methods=['POST'])
 async def audio_chat_completion_route_handler():
     audio_file = request.files['audioFile']
     tmp_file_path = save_file(audio_file)
@@ -105,7 +106,3 @@ async def audio_chat_completion_route_handler():
     print('대답', generated_text)
     bucket_audio_file_url = await handle_text_to_speech(generated_text)
     return jsonify({'data': bucket_audio_file_url})
-
-
-if __name__ == '__main__':
-    app.run(debug=True)
