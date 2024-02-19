@@ -1,18 +1,11 @@
-from flask import Flask, url_for, request, jsonify
-from openai import AsyncOpenAI
-import os
+from flask import Flask
 from flask_cors import CORS
 from dotenv import load_dotenv
 
-import tempfile
-import boto3
 from werkzeug.utils import secure_filename
-from datetime import datetime
-import io
 
 # DB, CACHE
 from flask_sqlalchemy import SQLAlchemy
-from redis import Redis
 
 
 db = SQLAlchemy()
@@ -29,7 +22,7 @@ def create_app():
 
     with app.app_context():
         db.create_all()
-        
+
         from .routes import api
         app.register_blueprint(api)
 

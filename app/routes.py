@@ -1,12 +1,12 @@
 from flask import Blueprint, request, jsonify
 from openai import AsyncOpenAI
 import os
-
+from . import db
 import tempfile
 import boto3
 from werkzeug.utils import secure_filename
 from datetime import datetime
-
+from .models import User, Message, ChatRoom
 
 OPENAI_API_KEY = os.environ.get('OPENAI_API_KEY')
 client = AsyncOpenAI(
@@ -90,11 +90,6 @@ def get_api_key():
         return f'your key is {OPENAI_API_KEY}'
 
 
-@api.route('/users')
-def get_users():
-    pass
-
-
 @api.route('/api/audiochat/completion', methods=['POST'])
 async def audio_chat_completion_route_handler():
     audio_file = request.files['audioFile']
@@ -106,3 +101,5 @@ async def audio_chat_completion_route_handler():
     print('대답', generated_text)
     bucket_audio_file_url = await handle_text_to_speech(generated_text)
     return jsonify({'data': bucket_audio_file_url})
+
+    
